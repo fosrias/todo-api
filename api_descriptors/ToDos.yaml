@@ -13,7 +13,7 @@ id: ToDos
 doc: Describes the semantics, states and state transitions associated with ToDos.
 links:
   self: ToDos
-  help:
+  help: /reference/todos
 
 # This section define the semantics of the collection object indented under the semantics:
 # header.
@@ -102,6 +102,7 @@ resources:
     doc: A list of ToDos
     links:
       self: ToDos
+      help: /reference/todos/todos/todolist
     descriptors:
       - href: list
       - href: items
@@ -120,6 +121,7 @@ resources:
     doc: This document should be explaining the meaning of this resource to humans
     links:
       self: ToDo
+      help: /reference/todos/todo/todoread
     descriptors:
       - href: todoid
       - href: todotitle
