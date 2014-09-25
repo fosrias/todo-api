@@ -1,0 +1,212 @@
+# A resource descriptor is a declarative configuration file that defines the semantic data,
+# states, and state transitions associated with a particular resource independent of protocol
+# media-type. Further, it also defines protocol specific templates for links that can be
+# and  included in the response and populated based on the associated state. By including
+# optional routes related metadata in the configuration, routes.rb mappings can be managed
+# DRYly in the resource descriptor file.
+#
+# The following sections facilitate a number of objectives including generating an ALPS profile
+# of the resource, generating human readable documents including sample representations,
+# decorating service responses, and scaffolding routes, controllers and models.
+
+id: ToDos
+doc: Describes the semantics, states and state transitions associated with ToDos.
+links:
+  self: ToDos
+  help:
+
+# This section define the semantics of the collection object indented under the semantics:
+# header.
+semantics:
+  todoid:
+    href: http://bit.ly/ZQXiBd#todoid
+    source: uuid
+
+  todotitle:
+    href: http://bit.ly/ZQXiBd#todotitle
+    source: title
+
+  items:
+    doc: A list of todos items
+    embed: multiple
+safe:
+  list:
+    doc: Returns a list of ToDos.
+    rt: todos
+  show:
+    doc: Returns a ToDo.
+    rt: todo
+
+# Example of link with parameters
+ # search:
+ #   doc: Returns a list of ToDos that satisfy the search term.
+ #   rt: drds
+ #   parameters:
+ #     - href: name
+# Example of embeded link
+#  {embedded_resource}-link:
+#    name: {embedded_resource}
+#    doc: A reference to the {embedded_resource}
+#    embed: true
+#    rt: http://alps.io/schema.org/{embedded_resource}
+
+
+# Idempotent links modify the resource in the server.
+# Following the same link more than once will always have the same effect.
+# An example of this is a link that deletes a resource in the server. This deletion is
+# idempotent if trying to delete an already deleted resource is a NOOP.
+#idempotent:
+  # Example of a idempotent transition. We can activate many times, it will always be activated.
+#  activate:
+#    doc: Activates a ToDo if it is deactivated.
+#    rt: ToDo
+# Example of idempotent update. If the whole resource is sent to the server to substitute it,
+# that operation is idempotent
+#  update:
+#    doc: Updates a ToDo
+#    rt: none
+#    links:
+#      profile: ToDos
+#      help: {documentation_base_uri}/forms/update
+#    semantics:
+#      - href: status
+#        sample: deactivated
+#        field_type: select
+#        validators:
+#          - required
+#        options:
+#          id: ToDo_status_options
+#          hash:
+#            active: activated
+#            inactive: deactivated
+
+# Unsafe links modify the resource in the server.
+# These links are not idempotent, each time they are followed the effect in the server is different.
+#unsafe:
+# Example
+#  create:
+#    doc: Creates a ToDo.
+#    rt: ToDo
+#    links:
+#      profile: ToDos
+#      help: {documentation_base_uri}/Forms/create
+#    href: update
+#    parameters:
+#      - href: name
+#        field_type: text
+
+
+# All the resources described in this document
+resources:
+  todos:
+    doc: A list of ToDos
+    links:
+      self: ToDos
+    descriptors:
+      - href: list
+      - href: items
+
+    states:
+      collection:
+        doc: The entry point state for interacting with ToDos.
+        transitions:
+          list:
+            name: self
+            location: entry
+            next:
+              - collection
+
+  todo:
+    doc: This document should be explaining the meaning of this resource to humans
+    links:
+      self: ToDo
+    descriptors:
+      - href: todoid
+      - href: todotitle
+      - href: show
+    states:
+      default:
+        doc: The default state of a ToDo.
+        transitions:
+          show:
+            name: self
+            next:
+              - activated
+#          deactivate:
+#            conditions:
+#              - can_deactivate
+#            next:
+#             - deactivated
+#      deactivated:
+#        doc: The DRD is shut down.
+#        transitions:
+#          show:
+#            name: self
+#            next:
+#              - deactivated
+#          activate:
+#            conditions:
+#              - can_activate
+#            next:
+#             - activated
+
+# All the media types our server will accept and represent our hypermedia documents into if
+# requested.
+# Simply a list of media types
+media_types:
+  - application/json
+  - application/hal+json
+  - application/vnd.hale+json
+  - text/html
+
+# Specify details for the HTTP protocol
+http_protocol:
+# Each link can define its method, headers and slt
+# Below several examples that show the different HTTP methods and how they work
+# with the previous definitions.
+  list:
+    uri: to_dos
+    method: GET
+    headers:
+      - Content-Type
+      - ETag
+#  search:
+#    uri: ToDos
+#    method: GET
+#    headers:
+#    # slt is the performance characteristic of following this link
+#    slt: &slt2
+#      99th_percentile: 250ms
+#      std_dev: 50ms
+#      requests_per_second: 25
+  create:
+    uri: to_dos
+    method: POST
+    headers:
+  show:
+    uri: to_dos/{uuid}
+    method: GET
+#    headers:
+#  activate:
+#    uri: ToDos/{uuid}/activate
+#    method: PUT
+#    headers:
+#    slt: *slt1
+
+# This is useful for the web framework to automatically create routes from this file
+routes:
+  todos:
+    list: &list
+      controller: to_dos_controller
+      action: index
+    search: *list
+    create:
+      controller: to_dos_controller
+      action: create
+  todo:
+    show:
+      controller: to_dos_controller
+      action: show
+    update:
+      controller: to_dos_controller
+      action: update
